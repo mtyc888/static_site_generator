@@ -17,3 +17,4 @@ class TestHTMLNode(unittest.TestCase):
         node3 = HTMLNode(props={"class":"primary-btn"})
         expected3 = ' class="primary-btn"'
         self.assertEqual(node3.props_to_html(), expected3)
+
