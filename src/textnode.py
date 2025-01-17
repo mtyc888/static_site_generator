@@ -59,37 +59,24 @@ def text_node_to_html_node(text_node):
     ]
 """
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
-    return_list = []
-    for node in old_nodes:
-        if node.text_type != TextType.TEXT:
-            return_list.append(node)
-        else:
-            node_value = node.text
-            try:
-                #first back tick
-                start = node_value.index(delimiter)
-                #second backtick after start
-                end = node_value.index(delimiter, start + 1)
-                # What would you do with the text start, during, and after?
-
-                #start
-                #if start is 0 it means that the code block happens at the beginning of the text 
-                if start > 0:
-                    string_before = node_value[0:start]
-                    node = TextNode(string_before, TextType.TEXT)
-                    return_list.append(node)
-                #during
-                string_during = node_value[start+1:end]
-                node2 = TextNode(string_during, text_type)
-                return_list.append(node2)
-                #after
-                if end < len(node_value) - 1:
-                    string_after = node_value[end+1:]
-                    node3 = TextNode(string_after, TextType.TEXT)
-                    return_list.append(node3)
-            except ValueError:
-                return_list.append(node)
-    return return_list
+    new_nodes = []
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            new_nodes.append(old_node)
+            continue
+        split_nodes = []
+        sections = old_node.text.split(delimiter)
+        if len(sections) % 2 == 0:
+            raise ValueError("Invalid markdown, formatted section not closed")
+        for i in range(len(sections)):
+            if sections[i] == "":
+                continue
+            if i % 2 == 0:
+                split_nodes.append(TextNode(sections[i], TextType.TEXT))
+            else:
+                split_nodes.append(TextNode(sections[i], text_type))
+        new_nodes.extend(split_nodes)
+    return new_nodes
 
 """
     This function takes raw markdown text and returns a list of tuples. Each tuple should contain the alt text and the URL of any markdown images.
@@ -115,27 +102,66 @@ def extract_markdown_links(text):
     return re.findall(pattern, text)
 
 """
-    Function to split TextNode objects, works similarly to split_nodes_delimiter()
+    Function to split TextNode objects, works similarly to split_nodes_delimiter(); We want to split 1 text nodes into multiple,
+    text nodes objects and store them into a list.
+
+    example for images:
+
+    node = TextNode(
+        "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)",
+        TextType.TEXT,
+    )
+
+    result: A list of TextNode objects
+
+    new_nodes = split_nodes_link([node])
+    # [
+    #     TextNode("This is text with a link ", TextType.TEXT),
+    #     TextNode("to boot dev", TextType.LINK, "https://www.boot.dev"),
+    #     TextNode(" and ", TextType.TEXT),
+    #     TextNode(
+    #         "to youtube", TextType.LINK, "https://www.youtube.com/@bootdotdev"
+    #     ),
+    # ]
 """
 def split_nodes_image(old_nodes):
+    # list to keep the list of TextNodes
     return_list = []
-
+    # loop through the current text node(s)
     for node in old_nodes:
+        # we get the text of the current text node object for splitting
         remaining_text = node.text
+        # we extract the images from the text
+        # example: This is text with a link [to boot dev](https://www.boot.dev) -> [("rick roll", "https://i.imgur.com/aKaOqIh.gif")]
         images = extract_markdown_images(node.text)
+        # we check if images (list) is empty
         if not images:
+            # if empty we will append it into the list
             return_list.append(node)
         else:
+            # we will then split it into image_alt and image_url
+            # image_alt -> "rick roll" 
+            # image_url -> "https://i.imgur.com/aKaOqIh.gif"
+            # [("rick roll", "https://i.imgur.com/aKaOqIh.gif")]
+            # (example) remaining_text -> This is text with a link [to boot dev](https://www.boot.dev) test test
             for image_alt, image_url in images:
+                # we split it into sections list, 
+                # where sections[0] will be the part of the string before the delimiter -> "This is text with a link"
+                # and sections[1] will be the part of the string after the delimiter -> "test test"
+                # and image_alt will be -> "to boot dev"
+                # and image_url will be -> "https://www.boot.dev"
                 sections = remaining_text.split(f"![{image_alt}]({image_url})", 1)
-                #sections[0] is the text before
-                #sections[1] is the text after 
+                # only if section[0] exists, we create a node and append it into the list
                 if sections[0]:
                     node_1 = TextNode(sections[0], TextType.TEXT)
                     return_list.append(node_1)
-
+                # create a node with the image alt and image url
                 return_list.append(TextNode(image_alt, TextType.IMAGE, image_url))
+                # we shift the remaining_text to the second half of the string (after alt and url)
+                # so following the previous example, remaining_text -> "test test"
+                # this is done so we can further process the remaining portion of the text
                 remaining_text = sections[1]
+            # if remaining_text exists, we create the node
             if remaining_text:
                 node_3 = TextNode(remaining_text, TextType.TEXT)
                 return_list.append(node_3)
@@ -165,3 +191,13 @@ def split_nodes_link(old_nodes):
                 
     return return_list
 
+def text_to_textnodes(text):
+    nodes = [TextNode(text, TextType.TEXT)]
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    nodes = split_nodes_delimiter(nodes, "*", TextType.ITALIC)
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+    return nodes
+    
