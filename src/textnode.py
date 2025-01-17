@@ -1,5 +1,6 @@
 from enum import Enum
 from htmlnode import LeafNode
+import re
 class TextType(Enum):
     TEXT = "text"
     BOLD = "bold"
@@ -89,3 +90,27 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
             except ValueError:
                 return_list.append(node)
     return return_list
+
+"""
+    This function takes raw markdown text and returns a list of tuples. Each tuple should contain the alt text and the URL of any markdown images.
+    For example:
+
+    text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+    print(extract_markdown_images(text))
+    # [("rick roll", "https://i.imgur.com/aKaOqIh.gif"), ("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg")]
+"""
+def extract_markdown_images(text):
+    pattern = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    return re.findall(pattern, text)
+"""
+    This function takes raw markdown text and returns a list of tuples. Each tuple should contain the alt text and the URL of any markdown links.
+    For example:
+
+    text = "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+    print(extract_markdown_links(text))
+    # [("to boot dev", "https://www.boot.dev"), ("to youtube", "https://www.youtube.com/@bootdotdev")]
+""" 
+def extract_markdown_links(text):
+    pattern = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    return re.findall(pattern, text)
+
