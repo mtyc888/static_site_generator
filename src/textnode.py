@@ -114,3 +114,54 @@ def extract_markdown_links(text):
     pattern = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
     return re.findall(pattern, text)
 
+"""
+    Function to split TextNode objects, works similarly to split_nodes_delimiter()
+"""
+def split_nodes_image(old_nodes):
+    return_list = []
+
+    for node in old_nodes:
+        remaining_text = node.text
+        images = extract_markdown_images(node.text)
+        if not images:
+            return_list.append(node)
+        else:
+            for image_alt, image_url in images:
+                sections = remaining_text.split(f"![{image_alt}]({image_url})", 1)
+                #sections[0] is the text before
+                #sections[1] is the text after 
+                if sections[0]:
+                    node_1 = TextNode(sections[0], TextType.TEXT)
+                    return_list.append(node_1)
+
+                return_list.append(TextNode(image_alt, TextType.IMAGE, image_url))
+                remaining_text = sections[1]
+            if remaining_text:
+                node_3 = TextNode(remaining_text, TextType.TEXT)
+                return_list.append(node_3)
+    return return_list
+
+
+def split_nodes_link(old_nodes):
+    return_list = []
+    for node in old_nodes:
+        remaining_text = node.text
+        links = extract_markdown_links(node.text)
+        if not links:
+            return_list.append(node)
+        else:
+            for link_text, link_url in links:
+                sections = remaining_text.split(f"[{link_text}]({link_url})", 1)
+                if sections[0]:
+                    node_1 = TextNode(sections[0], TextType.TEXT)
+                    return_list.append(node_1)
+
+                return_list.append(TextNode(link_text, TextType.LINK, link_url))
+                remaining_text = sections[1]
+
+            if remaining_text:
+                node_2 = TextNode(remaining_text, TextType.TEXT)
+                return_list.append(node_2)
+                
+    return return_list
+
