@@ -27,7 +27,7 @@ class TextNode():
 def text_node_to_html_node(text_node):
     match(text_node.text_type):
         case(TextType.TEXT):
-            return LeafNode(text_node.text,"")
+            return LeafNode(text_node.text)
         case(TextType.BOLD):
             return LeafNode(text_node.text,"b")
         case(TextType.ITALIC):
@@ -266,15 +266,12 @@ def markdown_to_html_node(markdown):
         print(f"Block content: {block}") 
         match(block_type):
             case "paragraph":
-                lines = block.split("\n")
-                paragraph = " ".join(lines)
-                text_nodes = text_to_textnodes(paragraph)
-                children = []
-                for node in text_nodes:
-                    html_node = text_node_to_html_node(node)
-                    children.append(html_node)
-                parent_node = HTMLNode("p",None,children)
-                return parent_node
+                # Join multiple lines and clean up whitespace
+                cleaned_text = " ".join(line.strip() for line in block.split("\n"))
+                text_nodes = text_to_textnodes(cleaned_text)
+                child_nodes = [text_node_to_html_node(text_node) for text_node in text_nodes]
+                p_node = HTMLNode("p", None, child_nodes, None)
+                parent_node.children.append(p_node)
 
             case "heading":
                 html_nodes = []
@@ -295,20 +292,29 @@ def markdown_to_html_node(markdown):
                 parent_node.children.append(pre_node)
 
             case "quote":
-                # Process inline markdown and create child nodes
                 lines = block.split("\n")
+                print("Lines after split:", lines)
+                
                 new_lines = []
                 for line in lines:
                     if not line.startswith(">"):
                         raise ValueError("Invalid quote block")
                     new_lines.append(line.lstrip(">").strip())
+                print("Lines after cleaning:", new_lines)
+                
                 content = " ".join(new_lines)
-                text_nodes = text_node_to_html_node(content)
+                print("Content after joining:", content)
+                
+                text_nodes = text_to_textnodes(content)
+                print("Text nodes:", text_nodes)
+                
                 children = []
-                for text_node in text_nodes:
-                    html_node = text_node_to_html_node(text_node)
+                for node in text_nodes:
+                    html_node = text_node_to_html_node(node)
+                    print("HTML node:", html_node.to_html())
                     children.append(html_node)
-                parent_node = HTMLNode("blockquote", None, children,None)
+                quote_node = HTMLNode("blockquote", None, children, None)
+                parent_node.children.append(quote_node)
                 
             case "ordered_list":
                 pass
