@@ -1,5 +1,5 @@
 from enum import Enum
-from htmlnode import LeafNode
+from htmlnode import LeafNode, HTMLNode
 import re
 class TextType(Enum):
     TEXT = "text"
@@ -200,4 +200,76 @@ def text_to_textnodes(text):
     nodes = split_nodes_image(nodes)
     nodes = split_nodes_link(nodes)
     return nodes
+    
+def markdown_to_blocks(markdown):
+    lines = markdown.split("\n\n")
+    filtered = []
+    for line in lines:
+        if line == "":
+            continue
+        line = line.strip()
+        filtered.append(line)
+    return filtered
+
+def block_to_block_type(block):
+    block_type_paragraph = "paragraph"
+    block_type_heading = "heading"
+    block_type_code = "code"
+    block_type_quote = "quote"
+    block_type_olist = "ordered_list"
+    block_type_ulist = "unordered_list"
+    lines = block.split("\n")
+
+    if block.startswith(("#","##","###","####","#####","######")):
+        return block_type_heading
+    if len(lines) > 0 and lines[0].startswith("```") and lines[-1].startswith("```"):
+        return block_type_code
+    if block.startswith(">"):
+        for line in lines:
+            if not line.startswith(">"):
+                return block_type_paragraph
+        return block_type_quote
+    if block.startswith("* "):
+        for line in lines:
+            if not line.startswith("* "):
+                return block_type_paragraph
+        return block_type_ulist
+    if block.startswith("- "):
+        for line in lines:
+            if not line.startswith("- "):
+                return block_type_paragraph
+        return block_type_ulist
+    if block.startswith("1. "):
+        i = 1
+        for line in lines:
+            if not line.startswith(f"{i}"):
+                return block_type_paragraph
+            i += 1
+        return block_type_olist
+    return block_type_paragraph
+
+"""
+    This function is to convert a full markdown document into a single parent HTMLNode.
+    This HTMLNode will contain many child HTMLNode objects, which represents the nested elements
+"""
+def markdown_to_html_node(markdown):
+    #split the markdown into blocks
+    markdown_blocks = markdown_to_blocks(markdown)
+    #parent node
+    parent_node = HTMLNode("div", None, [], None)
+    for block in markdown_blocks:
+        #determine the type of block
+        block_type = block_to_block_type(block)
+        match(block_type):
+            case "paragraph":
+                html_nodes = []
+                block_text_nodes = text_to_textnodes(block)
+                for node in block_text_nodes:
+                    html_node = text_node_to_html_node(node)
+                    html_nodes.append(html_node)
+                paragraph_node = HTMLNode("p",None, html_nodes,None)
+                parent_node.children.append(paragraph_node)
+            case _:
+                pass
+    return parent_node
     
