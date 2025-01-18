@@ -6,17 +6,32 @@ class HTMLNode():
         self.props = props
     
     def to_html(self):
+        # Handle case where tag is None
         if self.tag is None:
             return ""
-        
+            
+        # Get HTML properties string
         props = self.props_to_html()
-        if self.children is None:
-            # Self-closing tag if no children
-            return f"<{self.tag}{props}></{self.tag}>"
         
+        # Handle self-closing tags (img, br, hr)
+        if self.tag == "img":
+            return f"<{self.tag}{props}/>"
+            
+        # Handle regular tags
+        if self.children is None:
+            # Return tag with value for tags without children
+            inner_content = self.value if self.value is not None else ""
+            return f"<{self.tag}{props}>{inner_content}</{self.tag}>"
+        
+        # Handle tags with children
         children_html = ""
         for child in self.children:
-            children_html += child.to_html()
+            if child is None:
+                continue
+            child_html = child.to_html()
+            if child_html is None:
+                continue
+            children_html += child_html
         
         return f"<{self.tag}{props}>{children_html}</{self.tag}>"
     

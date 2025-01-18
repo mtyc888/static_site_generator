@@ -328,5 +328,26 @@ this is paragraph text
             "<div><blockquote>This is a blockquote block</blockquote><p>this is paragraph text</p></div>",
         )
 
+    def test_extract_title(self):
+        # Should return "Hello"
+        test1 = "# Hello"
+
+        # Should return "Main Title"
+        test2 = """## Second level
+        # Main Title
+        ### Third level"""
+
+        # Should raise exception
+        test3 = """## No h1 here
+        ### Still no h1
+        Regular text"""
+        line = extract_title(test1)
+        line2 = extract_title(test2)
+
+        self.assertEqual(line, "Hello")
+        self.assertEqual(line2, "Main Title")
+        with self.assertRaises(Exception):
+            extract_title(test3)
+
 if __name__ == "__main__":
     unittest.main()

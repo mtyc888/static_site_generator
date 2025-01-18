@@ -1,5 +1,5 @@
 from enum import Enum
-from htmlnode import LeafNode, HTMLNode
+from htmlnode import LeafNode, HTMLNode, ParentNode
 import re
 class TextType(Enum):
     TEXT = "text"
@@ -316,7 +316,11 @@ def markdown_to_html_node(markdown):
                 parent_node.children.append(quote_node)
                 
             case "ordered_list":
-                lines = [line.strip() for line in block.split("\n") if line.strip()]
+                lines = []
+                for line in block.split("\n"):
+                    stripped_line = line.strip()
+                    if stripped_line:
+                        lines.append(stripped_line)
                 html_items = []
                 for line in lines:
                     # Remove the list marker (* or - or +) and any whitespace after it
@@ -331,7 +335,11 @@ def markdown_to_html_node(markdown):
                 parent_node.children.append(unordered_node)
 
             case "unordered_list":
-                lines = [line.strip() for line in block.split("\n") if line.strip()]
+                lines = []
+                for line in block.split("\n"):
+                    stripped_line = line.strip()
+                    if stripped_line:
+                        lines.append(stripped_line)
                 html_items = []
                 for line in lines:
                     # Remove the list marker (* or - or +) and any whitespace after it
@@ -355,3 +363,13 @@ def text_to_children(text):
         html_node = text_node_to_html_node(text_node)
         children.append(html_node)
     return children
+
+def extract_title(markdown):
+    lines = markdown.split("\n")
+    for line in lines:
+        if line.strip().startswith("#") and not line.strip().startswith("##") and not line.strip().startswith("###"):
+            line = line.replace("#","")
+            line = line.strip()
+            return line
+    
+    raise Exception("No # found")
