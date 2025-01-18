@@ -245,6 +245,14 @@ This is the same paragraph on a new line
         block = "paragraph"
         self.assertEqual(block_to_block_type(block), block_type_paragraph)
 
+    def test_code_block_conversion(self):
+        markdown = '''```
+def hello():
+    print("Hello World!")
+```'''
+        expected = '<div><pre><code>def hello():\n    print("Hello World!")</code></pre></div>'
+        result = markdown_to_html_node(markdown)
+        assert result.to_html() == expected, f"Expected {expected}, but got {result.to_html()}"
 
 if __name__ == "__main__":
     unittest.main()

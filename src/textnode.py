@@ -255,20 +255,66 @@ def block_to_block_type(block):
 def markdown_to_html_node(markdown):
     #split the markdown into blocks
     markdown_blocks = markdown_to_blocks(markdown)
+    print("Blocks:", markdown_blocks)
     #parent node
     parent_node = HTMLNode("div", None, [], None)
     for block in markdown_blocks:
         #determine the type of block
+
         block_type = block_to_block_type(block)
+        print(f"Block type: {block_type}")
+        print(f"Block content: {block}") 
         match(block_type):
             case "paragraph":
+                lines = block.split("\n")
+                paragraph = " ".join(lines)
+                text_nodes = text_to_textnodes(paragraph)
+                children = []
+                for node in text_nodes:
+                    html_node = text_node_to_html_node(node)
+                    children.append(html_node)
+                parent_node = HTMLNode("p",None,children)
+                return parent_node
+
+            case "heading":
                 html_nodes = []
+                count = block.count("#")
+                block = block.replace("#","").strip()
                 block_text_nodes = text_to_textnodes(block)
                 for node in block_text_nodes:
                     html_node = text_node_to_html_node(node)
                     html_nodes.append(html_node)
-                paragraph_node = HTMLNode("p",None, html_nodes,None)
-                parent_node.children.append(paragraph_node)
+                #create and append header
+                header_node = HTMLNode(f"h{count}", None, html_nodes,None)
+                parent_node.children.append(header_node)
+
+            case "code":
+                block = block.replace("```","").strip()
+                code_leaf = LeafNode(block, "code")
+                pre_node = HTMLNode("pre", None, [code_leaf], None)
+                parent_node.children.append(pre_node)
+
+            case "quote":
+                # Process inline markdown and create child nodes
+                lines = block.split("\n")
+                new_lines = []
+                for line in lines:
+                    if not line.startswith(">"):
+                        raise ValueError("Invalid quote block")
+                    new_lines.append(line.lstrip(">").strip())
+                content = " ".join(new_lines)
+                text_nodes = text_node_to_html_node(content)
+                children = []
+                for text_node in text_nodes:
+                    html_node = text_node_to_html_node(text_node)
+                    children.append(html_node)
+                parent_node = HTMLNode("blockquote", None, children,None)
+                
+            case "ordered_list":
+                pass
+
+            case "unordered_list":
+                pass
             case _:
                 pass
     return parent_node
