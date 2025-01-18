@@ -294,7 +294,6 @@ def markdown_to_html_node(markdown):
             case "quote":
                 lines = block.split("\n")
                 print("Lines after split:", lines)
-                
                 new_lines = []
                 for line in lines:
                     if not line.startswith(">"):
@@ -317,11 +316,42 @@ def markdown_to_html_node(markdown):
                 parent_node.children.append(quote_node)
                 
             case "ordered_list":
-                pass
+                lines = [line.strip() for line in block.split("\n") if line.strip()]
+                html_items = []
+                for line in lines:
+                    # Remove the list marker (* or - or +) and any whitespace after it
+                    text = re.sub(r'^\d+\.\s*', '', line)
+                    # Convert the remaining text to HTML nodes
+                    children = text_to_children(text)
+                    # Create a new <li> with these children
+                    html_items.append(HTMLNode("li", None, children))
+                
+                # Create the <ul> with all <li> children
+                unordered_node = HTMLNode("ol", None, html_items)
+                parent_node.children.append(unordered_node)
 
             case "unordered_list":
-                pass
+                lines = [line.strip() for line in block.split("\n") if line.strip()]
+                html_items = []
+                for line in lines:
+                    # Remove the list marker (* or - or +) and any whitespace after it
+                    text = re.sub(r'^[\*\-\+]\s*', '', line)
+                    # Convert the remaining text to HTML nodes
+                    children = text_to_children(text)
+                    # Create a new <li> with these children
+                    html_items.append(HTMLNode("li", None, children))
+                
+                # Create the <ul> with all <li> children
+                unordered_node = HTMLNode("ul", None, html_items)
+                parent_node.children.append(unordered_node)
             case _:
                 pass
     return parent_node
-    
+
+def text_to_children(text):
+    text_nodes = text_to_textnodes(text)
+    children = []
+    for text_node in text_nodes:
+        html_node = text_node_to_html_node(text_node)
+        children.append(html_node)
+    return children
