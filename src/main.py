@@ -109,7 +109,11 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
             html_dest_path = item_dest_path.replace(".md", ".html")
             print(f"Will generate HTML at: {html_dest_path}")
             os.makedirs(os.path.dirname(html_dest_path), exist_ok=True)
+            # Just before generate_page, add:
+            print(f"Generating HTML file at: {html_dest_path}")
             generate_page(item_full_path, template_path, html_dest_path)
+            # After generate_page, add:
+            print(f"Generated file exists: {os.path.exists(html_dest_path)}")
         elif os.path.isdir(item_full_path):
             print(f"Found directory: {item_full_path}")
             generate_pages_recursive(item_full_path, template_path, os.path.join(dest_dir_path, item))
