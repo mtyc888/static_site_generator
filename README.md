@@ -31,4 +31,5 @@ How it works:
    6) Write the full HTML string to a file for that page in the /public directory.
 
 
-Run this to view the converted HTML files (Website): python3 -m http.server 8888
+Run this to view the converted HTML files (Website): python3 -m http.server 8888 (in the public directory)
+Run ./main.sh to generate html files from md files
